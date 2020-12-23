@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>中软旅游网-登录</title>  
+    <link rel="stylesheet" type="text/css" href="css/common.css">
+    <link rel="stylesheet" type="text/css" href="css/login.css">
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://cdn.bootcss.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://cdn.bootcss.com/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+      <!--导入angularJS文件-->
+    <script src="js/angular.min.js"></script>
+	<!--导入jquery-->
+	<script src="js/jquery-3.3.1.js"></script>
+</head>
+
+<script>
+
+	$(function () {
+        var flagOne=false
+        $(document).ready(function(){
+            //记住密码功能  后端设置 cookie 名字为 loginInfo
+            var str = getCookie("loginInfo")
+			//判断cookie的状态用于同步勾选框
+            if (str!="\"\""){
+                //让页面默认勾选 记住密码  首次访问的时候让他默认勾选
+                $("#rememberUser").attr("checked","true");
+			}
+
+
+            str = str.substring(1,str.length-1);
+            var  username = str.split(",")[0];
+            var password = str.split(",")[1];
+            //自动填充用户名和密码
+            $("#inputUsername").val(username);
+            // 这里是有cookie的时候  设置用户名已通过
+            flagOne=true
+            $("#inputPassword").val(password);
+        });
+
+		//获取cookie
+        function getCookie(cname) {
+            var name = cname + "=";
+            var ca = document.cookie.split(';');
+            for(var i=0; i<ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0)==' ') c = c.substring(1);
+                if (c.indexOf(name) != -1) return c.substring(name.length, c.length);
+            }
+            return "";
+        }
+
+
+
+
+
+
+        //判断用户名必须是6-8位单位字符
+        $("#inputUsername").blur(function () {
+            //1.定义正则表达式
+            var inputUsername = $("#inputUsername").val();
+            //满足返回true 不满足返回false
+            //验证用户名是否已经存在
+            $.post("user/checkUser?username="+inputUsername,function (returnData) {
+                if(returnData==1) {
+                    //有用户名在查询是否激活
+                    $.post("user/checkUser?checkActive=1&username="+inputUsername,function (returnData) {
+                        if (returnData==1){
+                            $("#errorMsg").html("")
+                            $("#inputUsername").css("border","")
+                            flagOne=true
+						} else {
+                            $("#errorMsg").html("账号未激活！")
+                            $("#inputUsername").css("border","1px solid red")
+                            flagOne=false
+						}
+					},"json")
+
+                }else {
+                    $("#errorMsg").html("账号不存在！")
+                    $("#inputUsername").css("border","1px solid red")
+                    flagOne=false
+                }
+
+            },"json")
+
+        })
+
+
+        //验证码验证
+        var  flag1=false;
+        $("#checkCode").blur(function () {
+            var val = $("#checkCode").val();
+            //传checkcode 是用于执行验证码的代码
+            $.post("user/registerUser?checkcode="+1,function (returnData) {
+                //不区分大小写
+                if(val.toUpperCase()!=returnData.toUpperCase()) {
+                    flag1=false;
+                    $("#errorMsg").html("验证码错误！")
+                    $("#checkCode").css("border","1px solid red")
+                }else {
+                    flag1 = true;
+                    $("#errorMsg").html("")
+                    $("#checkCode").css("border","")
+                }
+            },"json")
+        });
+
+        //登录
+		$("#loginForm").submit(function () {
+		    if (flagOne==true&&flag1==true){
+                var datas = $("#loginForm").serialize();
+                $.post("user/loginUser",datas,function (returndata) {
+                    if (returndata==1){
+                        $("#errorMsg").html("")
+                        // var loginForm = $("#loginForm").serialize();
+						//如果勾选则存入cookie
+                        if ( $("#rememberUser").is(":checked")) {
+                            $.post("rememberUser?cookieStatus=1",datas,function (returndate) {
+                            })
+                        }else{
+                            $.post("rememberUser?cookieStatus=2",function (returndate) {
+                            })
+						}
+
+                        //跳转到首页
+                        window.location.href="index.html";
+					}else {
+                        $("#errorMsg").html("密码错误！")
+                    }
+                },"json")
+            }
+           // alert($("#checkCode").val())
+
+            if ($("#inputUsername").val()==""){
+                $("#errorMsg").html("请输入账号！")
+
+            }
+            if ($("#checkCode").val()==""){
+                $("#errorMsg").html("请输入验证码！")
+
+            }
+			return false;
+        })
+
+
+
+
+    })
+
+
+
+</script>
+<body>
+<!--引入头部-->
+<div id="header"></div>
+    <!-- 头部 end -->
+    <section id="login_wrap">
+        <div class="fullscreen-bg" style="background: url(images/login_bg.png);height: 532px;">
+        	
+        </div>
+        <div class="login-box">
+        	<div class="title">
+        		<span>欢迎登录中软旅游账户</span>
+        	</div>
+        	<div class="login_inner">
+				
+				<!--登录错误提示消息-->
+        		<div id="errorMsg" class="alert alert-danger" ></div>
+				<form id="loginForm" action="" method="post" accept-charset="utf-8">
+        			<input type="hidden" name="action" value="login"/>
+					<input name="username" id="inputUsername" type="text"  placeholder="请输入账号" autocomplete="off">
+        			<input name="password" id="inputPassword" type="password"  placeholder="请输入密码" autocomplete="off">
+        			<div class="verify">
+					<input name="check" id="checkCode" type="text" placeholder="请输入验证码" autocomplete="off">
+					<span><img src="checkCode" alt="" onclick="changeCheckCode(this)"></span>
+					<script type="text/javascript">
+						//图片点击事件
+						function changeCheckCode(img) {
+							img.src="checkCode?"+new Date().getTime();
+						}
+					</script>
+			</div>
+			<div class="submit_btn">
+        				<button type="submit" id="loginBtn">登录</button>
+        				<div class="auto_login">
+        					<input type="checkbox" name="" id="rememberUser"  class="checkbox">
+        					<span>记住密码</span>
+        				</div>        				
+        			</div>        			       		
+        		</form>
+        		<div class="reg">没有账户？<a href="http://localhost:8080/travel/register.html">立即注册</a></div>
+        	</div>
+        </div>
+    </section>
+
+
+    <!--引入尾部-->
+    <div id="footer"></div>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="js/jquery-1.11.0.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="js/bootstrap.min.js"></script>
+    <!--导入布局js，共享header和footer-->
+    <script type="text/javascript" src="js/include.js"></script>
+</body>
+
+</html>

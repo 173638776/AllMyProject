@@ -1,0 +1,118 @@
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="js/jquery-3.3.1.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+<script src="js/getParameter.js"></script>
+
+<style>
+    #login_a{
+        text-decoration: none;
+        color: red;
+        font-size: 10px;
+        font-weight: bold;
+    }
+</style>
+<script>
+
+
+    $(function () {
+
+        //发送ajax请求  响应名字
+        $.post("user/showUserName",function (data) {
+            if (data!=null){
+                $("#loginMsg").html("您好！"+data)
+            } else {
+                $("#loginMsg").html("您好,请"+"<a id='login_a' href='login.html'>登录!</a>")
+            }
+        },"json")
+
+        //退出登录
+        $("#exitLogin").click(function () {
+           $.post("user/exitLogin",function () {
+           },"json")
+        })
+        //var cidList;
+       // var lis='<li class="nav-active"><a href="index.html">首页</a></li>';
+        //发送ajax请求  响应列表
+        $.post("user/showCategory",function (data) {
+            if (data!=null){
+                //把首页接上
+                $("#cidUl").append(" <li class=\"nav-active\"><a href=\"index.html\">首页</a></li>")
+                //遍历列表集合
+                $.each($(data),function (index, element) {
+                    lis='<li class="nav-active"><a href="route_list.html?cid='+element.cid+'">'+element.cname+'</a></li>'
+                    $("#cidUl").append(lis)
+                })
+
+
+            }
+        },"json")
+
+        //回显名字
+        var rname = getParameter("rname");
+        if (rname!=null){
+            $("#serchInput").attr("value",decodeURI(rname))
+        }
+
+    })
+
+    //给搜索方法链接绑定一个方法
+    function searchRoute() {
+       var rname = $("#serchInput").val();
+        var cid = getParameter("cid");
+        //2.页面传参
+        location.href = "route_list.html?cid="+cid+"&rname="+rname
+
+    }
+
+
+</script>
+<!-- 头部 start -->
+    <header id="header">
+        <div class="top_banner">
+            <img src="images/top_banner.jpg" alt="">
+        </div>
+        <div class="shortcut">
+            <!-- 未登录状态  -->
+            <div class="login_out">
+                <a href="login.html">登录</a>
+                <a href="register.html">注册</a>
+            </div>
+            <!-- 登录状态  -->
+            <div class="login">
+            	<!--消息提示框-->
+                <span id="loginMsg"></span>
+                <a href="myfavorite.html" class="collection">我的收藏</a>
+                <a  href="index.html" id="exitLogin">退出</a>
+            </div>
+        </div>
+        <div class="header_wrap">
+            <div class="topbar">
+                <div class="logo">
+                    <a href="/"><img src="images/logo.jpg" alt=""></a>
+                </div>
+                <div class="search">
+                    <input name="" id="serchInput" type="text" placeholder="请输入路线名称" class="search_input" autocomplete="off">
+                    <!--javascript:（可以定义一个方法）;-->
+                    <a href="javascript:searchRoute();" class="search-button">搜索</a>
+                </div>
+                <div class="hottel">
+                    <div class="hot_pic">
+                        <img src="images/hot_tel.jpg" alt="">
+                    </div>
+                    <div class="hot_tel">
+                        <p class="hot_time">客服热线(9:00-6:00)</p>
+                        <p class="hot_num">400-618-9090</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+    <!-- 头部 end -->
+     <!-- 首页导航 -->
+    <div class="navitem">
+        <ul class="nav" id="cidUl">
+
+        </ul>
+    </div>
+    
